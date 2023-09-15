@@ -38,7 +38,7 @@ Provide a seamless way of creating APIs. The goal is to have an API that don't e
 - [ ] Advanced array queries
 - [ ] Advanced authentication
 - [ ] Advanced authorization
-- [] DB integration
+- [ ] DB integration
 
 ## How it works
 
