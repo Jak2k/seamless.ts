@@ -28,6 +28,28 @@ To execute after build:
 
 Provide a seamless way of creating APIs. The goal is to have an API that don't even notice.
 
+## Roadmap
+
+- [x] Create a server that can be used to create APIs
+- [x] Create a client that can be used to access the API
+- [ ] Support for nested objects
+- [x] Support for arrays
+- [ ] Support for functions
+- [ ] Advanced array queries
+- [ ] Advanced authentication
+- [ ] Advanced authorization
+- [] DB integration
+
+## How it works
+
+The server, which is written with Bun, provides a WebSocket and a REST API.
+
+The client can subscribe to remote objects and get notified when they change.
+
+For easier use, the client outputs a proxy object that can be used to access the remote objects as if they were local.
+
+Nested objects aren't watched, instead, you have to replace the whole object, if you want to change a nested property.
+
 ## Usage
 
 ```ts
