@@ -10,6 +10,6 @@
   },
   "scripts": {
     "dev": "bun run --hot src/server/index.ts",
-    "build": "bun build --compile src/server/index.ts --outfile dist/server"
+    "build": "NODE_ENV=production bun build --compile src/server/index.ts --outfile dist/server"
   }
 }

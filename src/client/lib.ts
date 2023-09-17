@@ -1,3 +1,7 @@
+import { createLogger, jsonFormatter } from "../shared/logging";
+
+const log = createLogger();
+
 export class RemoteObjectManager {
   ws: WebSocket;
   models: Map<string, any> = new Map();
@@ -16,9 +20,27 @@ export class RemoteObjectManager {
     this.#pingInterval = setInterval(() => {
       // If the last ping was more than 30 seconds ago, error the user
       if (Date.now() - this.#lastPing > 30000) {
-        console.error("⚠️ No ping received from server in 30 seconds");
+        log({
+          status: "error",
+          message: "No ping received from server in 30 seconds",
+          debug: {
+            lastPing: this.#lastPing,
+            time: Date.now(),
+            adress: this.ws.url
+          },
+          emoji: "🏓"
+        })
       } else if (Date.now() - this.#lastPing > 10000) {
-        console.warn("⚠️ No ping received from server in 10 seconds");
+        log({
+          status: "warning",
+          message: "No ping received from server in 10 seconds",
+          debug: {
+            lastPing: this.#lastPing,
+            time: Date.now(),
+            adress: this.ws.url
+          },
+          emoji: "🏓"
+        })
       }
 
       // Ping
@@ -34,18 +56,41 @@ export class RemoteObjectManager {
 
     if (dataText === "pong") {
       this.#lastPing = Date.now();
-      console.debug("✅ Received pong");
+      log({
+        status: "success",
+        message: "Received pong",
+        emoji: "🏓",
+        debug: {
+          time: Date.now(),
+        }
+      })
       return;
     }
 
     if (dataText === "Unauthorized") {
-      console.error("⚠️ Unauthorized");
+      log({
+        status: "error",
+        message: "Unauthorized",
+        emoji: "🛂",
+        debug: {
+          time: Date.now(),
+        },
+        reason: "user"
+      })
       return;
     }
 
     const data = JSON.parse(dataText);
 
-    console.log("➡️ Received message", data);
+    log({
+      status: "success",
+      message: "Received message",
+      emoji: "📥",
+      debug: {
+        time: Date.now(),
+        data
+      }
+    })
 
     const modelData = data.data;
     const topic = data.topic;
@@ -53,11 +98,28 @@ export class RemoteObjectManager {
     // Update the model
     this.models.set(topic, modelData);
 
-    console.log("Updated model ", topic, modelData);
+    log({
+      status: "success",
+      message: "Updated model",
+      emoji: "🔄",
+      debug: {
+        time: Date.now(),
+        topic,
+        modelData
+      }
+    })
   }
 
   async subscribe(topic: string) {
-    console.log("Subscribing to ", topic);
+    log({
+      status: "success",
+      message: "Subscribing to topic",
+      emoji: "🔌",
+      debug: {
+        time: Date.now(),
+        topic
+      }
+    })
     this.ws.send(JSON.stringify({
       type: "sub",
       topic
@@ -100,7 +162,18 @@ export class RemoteObjectManager {
           },
           auth: that.auth
         }));
-        console.log("📤 Sent message")
+        log({
+          status: "success",
+          message: "Sent message",
+          emoji: "📤",
+          debug: {
+            time: Date.now(),
+            topic,
+            data: {
+              [prop]: value
+            }
+          }
+        })
         return true;
       },
     });
