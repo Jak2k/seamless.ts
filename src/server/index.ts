@@ -4,7 +4,10 @@ import { createServer, createModel } from "./lib";
 const config = {
   message: "Hello World!",
   counter: 0,
-  isAwesome: true
+  isAwesome: true,
+  increment() {
+    this.counter++;
+  }
 }
 
 const textList = [
@@ -54,7 +57,8 @@ const server = createServer({
     ["config", configModel],
     ["textList", textListModel]
   ]),
-  bundle: clientCode
+  bundle: clientCode,
+  enableFunctions: true
 });
 
 

@@ -20,6 +20,7 @@ type Models = Map<string, Model>;
 interface ServerOptions {
   models: Models
   bundle: string
+  enableFunctions?: boolean
 }
 
 class Server {
