@@ -1,5 +1,10 @@
-import { ServerWebSocket, type Server as BunServer } from "bun";
+import { ServerWebSocket, type Server as BunServer, BunFile } from "bun";
 import { functionReplacer } from "./functionUtils";
+import { createLogger, jsonFormatter, unauthorizedMessage } from "../shared/logging";
+
+const MODE = process.env.NODE_ENV;
+
+const log = MODE === "production" ? createLogger(console.log, jsonFormatter) : createLogger();
 
 interface Permissions {
   read: boolean;
@@ -49,12 +54,22 @@ class Server {
     });
     const send = server.publish(topic, data);
     if (send === 0) {
-      console.warn("⚠️ Dropped");
+      log({
+        status: "error",
+        reason: "system",
+        message: "Message dropped, retrying in 1 second",
+        emoji: "💧",
+      })
       // Wait a second and try again
       setTimeout(() => {
         this.broadcast(server, topic);
       }, 1000);
-    } else console.log("✅ Broadcasted ", topic, data, send);
+    } else log({
+      status: "success",
+      message: "Broadcasted",
+      emoji: "📡",
+      debug: {topic, data, send}
+    })
   }
 
   listen(port: number) {
@@ -103,10 +118,13 @@ class Server {
         const method = req.method.toLowerCase();
 
         if (!auth.read && method === "get") {
+          log(unauthorizedMessage({auth, method, modelName}))
           return new Response("Unauthorized", { status: 401 });
         } else if (!auth.write && method === "post") {
+          log(unauthorizedMessage({auth, method, modelName}))
           return new Response("Unauthorized", { status: 401 });
         } else if (!auth.execute && method === "put") {
+          log(unauthorizedMessage({auth, method, modelName}))
           return new Response("Unauthorized", { status: 401 });
         }
 
@@ -196,13 +214,18 @@ class Server {
             });
             if (!auth.read) {
               ws.send("Unauthorized");
-              console.log("🛂 Unauthorized Request");
+              log(unauthorizedMessage({auth, method: "ws.sub", modelName: topic}))
               return;
             }
 
             // Store that the client is subscribed to this model
             ws.subscribe(topic);
-            console.log("✅ subscribed to", topic);
+            log({
+              status: "success",
+              message: "Subscribed",
+              emoji: "🔌",
+              debug: {topic},
+            })
             ws.send(
               that.stringifyModel({
                 topic,
@@ -251,7 +274,7 @@ class Server {
 
             if (!auth.write) {
               ws.send("Unauthorized");
-              console.log("🛂 Unauthorized Request");
+              log(unauthorizedMessage({auth, method: "ws.pub", modelName: topic}))
               return;
             }
 
@@ -302,7 +325,7 @@ class Server {
 
             if (!auth.execute) {
               ws.send("Unauthorized");
-              console.log("🛂 Unauthorized Request");
+              log(unauthorizedMessage({auth, method: "ws.call", modelName: topic}))
               return;
             }
 
@@ -324,17 +347,26 @@ class Server {
               return;
             }
 
-            console.log("📞 call", functionName, data.args);
             try {
               // @ts-ignore
               model.obj[functionName](...data.args);
             } catch (e: any) {
-              console.log("❌", e);
+              log({
+                status: "error",
+                message: "Error while executing function",
+                emoji: "📞",
+                debug: {topic, functionName, args: data.args, e},
+              })
               ws.send("Error while executing function" + e.message);
               return;
             }
 
-            console.log("✅ called", functionName, data.args);
+            log({
+              status: "success",
+              message: "Called function",
+              emoji: "📞",
+              debug: {topic, functionName, args: data.args},
+            })
 
             // Send the new data to all subscribers
             that.broadcast(ws, topic);
