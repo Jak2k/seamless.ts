@@ -88,6 +88,13 @@ class Server {
 
         // serve the client bundle
         if (pathname === "/client.js") {
+          log({
+            status: "success",
+            message: "Served client bundle",
+            debug: {pathname},
+            emoji: "📦",
+            reason: "system"
+          })
           return new Response(that.#jsBundle, {
             headers: {
               "Content-Type": "text/javascript",
