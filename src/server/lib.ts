@@ -138,9 +138,10 @@ class Server {
           const model = that.#models.get(body.topic)!;
 
           // Check if function exists
-          // @ts-ignore
           if (
+            // @ts-ignore
             !model.obj[body.function] ||
+            // @ts-ignore
             typeof model.obj[body.function] !== "function"
           ) {
             return new Response("Function not found", { status: 404 });
@@ -313,9 +314,10 @@ class Server {
             }
 
             // Check if function exists
-            // @ts-ignore
             if (
+              // @ts-ignore
               !model.obj[functionName] ||
+              // @ts-ignore
               typeof model.obj[functionName] !== "function"
             ) {
               ws.send("Function not found");

@@ -38,9 +38,14 @@ export class RemoteObjectManager {
       return;
     }
 
+    if (dataText === "Unauthorized") {
+      console.error("⚠️ Unauthorized");
+      return;
+    }
+
     const data = JSON.parse(dataText);
 
-    console.log("Received message", data);
+    console.log("➡️ Received message", data);
 
     const modelData = data.data;
     const topic = data.topic;
@@ -95,6 +100,7 @@ export class RemoteObjectManager {
           },
           auth: that.auth
         }));
+        console.log("📤 Sent message")
         return true;
       },
     });
