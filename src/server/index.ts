@@ -4,7 +4,10 @@ import { createServer, createModel } from "./lib";
 const config = {
   message: "Hello World!",
   counter: 0,
-  isAwesome: true
+  isAwesome: true,
+  increment(amount: number) {
+    this.counter += amount;
+  }
 }
 
 const textList = [
@@ -16,29 +19,33 @@ const textList = [
   "Today?"
 ];
 
-const configModel = createModel(config, (req, auth) => {
+const configModel = createModel(config, (auth) => {
   if (auth.getBearerPassword() === "123") {
     return {
       write: true,
-      read: true
+      read: true,
+      execute: true
     };
   }
   return {
     write: false,
-    read: true
+    read: true,
+    execute: false
   };
 });
 
-const textListModel = createModel(textList, (req, auth) => {
+const textListModel = createModel(textList, (auth) => {
   if (auth.getBearerPassword() === "123") {
     return {
       write: true,
-      read: true
+      read: true,
+      execute: false
     };
   }
   return {
     write: false,
-    read: true
+    read: true,
+    execute: false
   };
 });
 
@@ -46,11 +53,12 @@ const bundle = await bundleClient();
 const clientCode = await bundle.outputs[0].text();
 
 const server = createServer({
-  models: {
-    config: configModel,
-    textList: textListModel
-  },
-  bundle: clientCode
+  models: new Map([
+    ["config", configModel],
+    ["textList", textListModel]
+  ]),
+  bundle: clientCode,
+  enableFunctions: true
 });
 
 
