@@ -34,7 +34,7 @@ Provide a seamless way of creating APIs. The goal is to have an API that don't e
 - [x] Create a client that can be used to access the API
 - [ ] Support for nested objects
 - [x] Support for arrays
-- [ ] Support for functions
+- [x] Support for functions
 - [ ] Advanced array queries
 - [ ] Advanced authentication
 - [ ] Advanced authorization
@@ -61,6 +61,9 @@ const config = {
   message: "Hello World!",
   counter: 0,
   isAwesome: true,
+  increment() {
+    this.counter++;
+  },
 };
 
 const configModel = createModel(config, (req, auth) => {

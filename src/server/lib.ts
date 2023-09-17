@@ -1,13 +1,21 @@
-import { BuildOutput } from "bun";
+interface Permissions {
+  read: boolean,
+  write: boolean
+  execute: boolean
+}
+
+interface Auth {
+  getBearerPassword: () => string
+}
+
+type AuthGuard = (auth: Auth) => Permissions;
 
 interface Model {
   obj: {},
-  auth: (req: any, auth: any) => { read: boolean, write: boolean }
+  auth: AuthGuard
 }
 
-type Models = {
-  [key: string]: Model
-}
+type Models = Map<string, Model>;
 
 interface ServerOptions {
   models: Models
@@ -53,16 +61,16 @@ class Server {
       
         const modelName = pathname.split("/")[1];
 
-        const model = that.#models[modelName];
-
-        if (!model) {
+        if (!that.#models.has(modelName)) {
           return new Response("Model not found", { status: 404 });
         }
 
+        const model = that.#models.get(modelName)!;
+
         // Check if the user has read access
-        const auth = model.auth(req, {
+        const auth = model.auth({
           getBearerPassword() {
-            return req.headers.get("Authorization");
+            return req.headers.get("Authorization") || "";
           }
         });
 
@@ -114,13 +122,14 @@ class Server {
               return;
             }
             // Check if the model exists
-            const model = that.#models[topic];
-            if (!model) {
+            if (!that.#models.has(topic)) {
               ws.send("Model not found");
               return;
             }
+            const model = that.#models.get(topic)!;
+
             // Check if the user has read access
-            const auth = model.auth(ws, {
+            const auth = model.auth({
               getBearerPassword() {
                 return data.auth;
               }
@@ -145,12 +154,14 @@ class Server {
               ws.send("No topic provided");
               return;
             }
+
             // Check if the model exists
-            const model = that.#models[topic];
-            if (!model) {
+            if (!that.#models.has(topic)) {
               ws.send("Model not found");
               return;
             }
+            const model = that.#models.get(topic)!;
+
             // Remove the subscription
             ws.unsubscribe(topic);
           }
@@ -163,13 +174,13 @@ class Server {
               return;
             }
             // Check if the model exists
-            const model = that.#models[topic];
-            if (!model) {
+            if (!that.#models.has(topic)) {
               ws.send("Model not found");
               return;
             }
+            const model = that.#models.get(topic)!;
             // Check if the user has write access
-            const auth = model.auth(ws, {
+            const auth = model.auth({
               getBearerPassword() {
                 return data.auth;
               }
@@ -214,7 +225,9 @@ export function createServer(serverOptions: ServerOptions) {
   return new Server(serverOptions);
 }
 
-export function createModel(obj: {}, auth: (req: any, auth: any) => { read: boolean, write: boolean }): Model {
+// The createModel function is used to create a model
+// Currently it just takes the Model but not as object but as parameters
+export function createModel(obj: {}, auth: AuthGuard): Model {
   return {
     obj,
     auth
