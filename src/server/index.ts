@@ -5,8 +5,8 @@ const config = {
   message: "Hello World!",
   counter: 0,
   isAwesome: true,
-  increment() {
-    this.counter++;
+  increment(amount: number) {
+    this.counter += amount;
   }
 }
 
